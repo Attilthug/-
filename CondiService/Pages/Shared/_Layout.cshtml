@@ -1,0 +1,80 @@
+@using CondiService.Web.Services
+@using Microsoft.AspNetCore.Mvc.Rendering
+@inject Microsoft.AspNetCore.Identity.UserManager<ApplicationUser> UserManager
+@{
+    var flash = NotificationService.Parse(TempData[NotificationService.TempDataKey]?.ToString());
+    var me = User.Identity?.IsAuthenticated == true ? await UserManager.GetUserAsync(User) : null;
+    string path = ViewContext.HttpContext.Request.Path.Value ?? "";
+    bool IsActive(string p) => path.StartsWith(p, StringComparison.OrdinalIgnoreCase);
+}
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"] – Конди</title>
+    <link rel="stylesheet" href="~/css/site.css" />
+</head>
+
+<body>
+  <div class="shell">
+    <aside class="rail">
+      <div class="rail-card">
+        <a class="brand" asp-page="/Index">
+          <span class="brand-mark"></span>
+          <span>
+            <div class="brand-title">CondiService</div>
+            <div class="brand-sub">Сервисный центр</div>
+          </span>
+        </a>
+
+        <nav class="nav">
+          <a asp-page="/Index" class="@(IsActive("/") ? "active" : "")">Главная</a>
+          <a asp-page="/Requests/Index" class="@(IsActive("/Requests") ? "active" : "")">Заявки</a>
+          <a asp-page="/Stats/Index" class="@(IsActive("/Stats") ? "active" : "")">Статистика</a>
+          <a asp-page="/Quality/Index" class="@(IsActive("/Quality") ? "active" : "")">Качество</a>
+        </nav>
+
+        <div class="userbox">
+          @if (User?.Identity?.IsAuthenticated ?? false)
+          {
+              <div class="chip">@User.Identity!.Name</div>
+              <a class="btn btn-danger" asp-page="/Account/Logout">Выйти</a>
+          }
+          else
+          {
+              <a class="btn btn-primary" asp-page="/Account/Login">Войти</a>
+          }
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="topstrip">
+        <div class="page-title">WORKFLOW</div>
+        <div class="spacer"></div>
+        <a class="btn btn-soft" asp-page="/Requests/Create">+ Новая заявка</a>
+      </div>
+
+      <div class="container">
+        @if (flash != null)
+        {
+            var cls = flash.Value.type switch
+            {
+                "success" => "alert success",
+                "warning" => "alert info",
+                "danger" => "alert danger",
+                _ => "alert info"
+            };
+            <div class="@cls" style="margin-bottom:14px;">@flash.Value.message</div>
+        }
+
+        @RenderBody()
+      </div>
+    </main>
+  </div>
+
+  @RenderSection("Scripts", required: false)
+</body>
+
+</html>
